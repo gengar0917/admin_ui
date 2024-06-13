@@ -67,8 +67,8 @@ import Cookies from "js-cookie";
 import { encrypt, decrypt } from '@/utils/jsencrypt'
 
 export default {
-  name: "Login",
-  data() { //데이터 가지고 오는 곳은 없고
+  name: "Login", //컴포넌트의 이름 정의
+  data() { //컴포넌트의 데이터 정의
     return {
       codeUrl: "",
       loginForm: { //파라미터 값 기본 세팅
@@ -103,12 +103,12 @@ export default {
       immediate: true //옵션은 와처(watcher)가 설정될 때 즉시 핸들러 함수를 한 번 실행하도록 합니다. 즉, 컴포넌트가 마운트될 때 처음으로 이 함수가 실행됩니다.
     }
   },
-  created() {
+  created() { //Vue 인스턴스가 생성될 때 실행되는 라이프사이클 훅입니다.
     this.getCode();
     this.getCookie();
   },
   methods: {
-    getCode() {
+    getCode() { //인증 코드 관련 메서드
       getCodeImg().then(res => {
         this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled;
         if (this.captchaEnabled) {
@@ -121,7 +121,7 @@ export default {
       const username = Cookies.get("username");
       const password = Cookies.get("password");
       const rememberMe = Cookies.get('rememberMe')
-      this.loginForm = {
+      this.loginForm = { // 로그인 폼 데이터를 쿠키에서 가져온 값으로 초기화합니다.
         username: username === undefined ? this.loginForm.username : username,
         password: password === undefined ? this.loginForm.password : decrypt(password),
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
@@ -142,8 +142,8 @@ export default {
             Cookies.remove('rememberMe'); //rememberMe를 쿠키에서 지우겠다
           }
           //store = 쿠키 값에 저장되는 값
-          this.$store.dispatch("Login", this.loginForm).then(() => { //이 뷰에 스토어에 저장된 값을 가져와 거기에 로그인 한 값이 있으면 로그인 폼으로 던져
-            this.$router.push({ path: this.redirect || "/" }).catch(()=>{}); // 이 라우터에 이 리다이렉트 들어온 것, 혹은 루트가 들어왔을 때 잡아서 로그인 폼으로 넣을거야
+          this.$store.dispatch("Login", this.loginForm).then(() => { //이 뷰에 스토어에 저장된 값을 가져와 거기에 로그인 한 값이 있으면 로그인 폼으로 던져 (맞나?)
+            this.$router.push({ path: this.redirect || "/" }).catch(()=>{}); // 이 라우터에 이 리다이렉트 들어온 것, 혹은 루트가 들어왔을 때 잡아서 로그인 폼으로 넣을거야 (맞나?)
           }).catch(() => {
             this.loading = false;
             if (this.captchaEnabled) {

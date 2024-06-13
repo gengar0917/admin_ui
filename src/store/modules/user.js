@@ -33,7 +33,7 @@ const user = {
   },
 
   actions: {
-    // 登录
+    // 로그인
     Login({ commit }, userInfo) {
       const username = userInfo.username.trim()
       const password = userInfo.password

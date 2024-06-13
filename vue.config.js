@@ -37,7 +37,8 @@ module.exports = {
       [process.env.VUE_APP_BASE_API]: {
         // target: `http://localhost:8080`, //proxy error
         // target: `http://localhost:8801`, //404 error
-        target: `http://192.168.50.221:8801`, //404 error
+        // target: `http://192.168.50.221:8801`, //404 error
+        target: 'http://api-test.uznextest.com',
         changeOrigin: true,
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
