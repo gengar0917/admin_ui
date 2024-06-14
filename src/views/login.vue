@@ -23,21 +23,21 @@
           <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
         </el-input>
       </el-form-item>
-      <el-form-item prop="code" v-if="captchaEnabled">
-        <el-input
-          v-model="loginForm.code"
-          auto-complete="off"
-          placeholder="Verification Code"
-          style="width: 63%"
-          @keyup.enter.native="handleLogin"
-        >
-          <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />
-        </el-input>
-        <div class="login-code">
-          <img :src="codeUrl" @click="getCode" class="login-code-img"/>
-        </div>
-      </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">Remember Me</el-checkbox>
+<!--      <el-form-item prop="code" v-if="captchaEnabled">-->
+<!--        <el-input-->
+<!--          v-model="loginForm.code"-->
+<!--          auto-complete="off"-->
+<!--          placeholder="Verification Code"-->
+<!--          style="width: 63%"-->
+<!--          @keyup.enter.native="handleLogin"-->
+<!--        >-->
+<!--          <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />-->
+<!--        </el-input>-->
+<!--        <div class="login-code">-->
+<!--          <img :src="codeUrl" @click="getCode" class="login-code-img"/>-->
+<!--        </div>-->
+<!--      </el-form-item>-->
+<!--      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">Remember Me</el-checkbox>-->
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -62,9 +62,10 @@
 </template>
 
 <script>
-import { getCodeImg } from "@/api/login";
+import {getCodeImg, login} from "@/api/login";
 import Cookies from "js-cookie";
 import { encrypt, decrypt } from '@/utils/jsencrypt'
+import {setToken} from "@/utils/auth";
 
 export default {
   name: "Login", //컴포넌트의 이름 정의
@@ -74,9 +75,10 @@ export default {
       loginForm: { //파라미터 값 기본 세팅
         username: "admin",
         password: "admin123",
-        rememberMe: false,
-        code: "",
-        uuid: ""
+        captcah: null,
+        // rememberMe: false
+        // code: "",
+        // uuid: ""
       },
       loginRules: { //로그인 규칙
         username: [
@@ -84,12 +86,12 @@ export default {
         ],
         password: [
           { required: true, trigger: "blur", message: "Please enter your password" } //필수 입력, 사용자가 password 필드에서 다른 필드로 이동할 때, 메세지 띄움
-        ],
-        code: [{ required: true, trigger: "change", message: "Please enter the verification code" }] //필수 입력, 사용자가 code 필드의 값을 변경할 때, 사용자가 값을 입력하지 않고 다른 값을 입력하려 할 때 메세지 띄움
+        ]
+        // code: [{ required: true, trigger: "change", message: "Please enter the verification code" }] //필수 입력, 사용자가 code 필드의 값을 변경할 때, 사용자가 값을 입력하지 않고 다른 값을 입력하려 할 때 메세지 띄움
       },
       loading: false,
       // Verification code toggle
-      captchaEnabled: true,
+      // captchaEnabled: true,
       // Registration toggle
       register: false,
       redirect: undefined
@@ -103,20 +105,20 @@ export default {
       immediate: true //옵션은 와처(watcher)가 설정될 때 즉시 핸들러 함수를 한 번 실행하도록 합니다. 즉, 컴포넌트가 마운트될 때 처음으로 이 함수가 실행됩니다.
     }
   },
-  created() { //Vue 인스턴스가 생성될 때 실행되는 라이프사이클 훅입니다.
-    this.getCode();
-    this.getCookie();
-  },
+  // created() { //Vue 인스턴스가 생성될 때 실행되는 라이프사이클 훅입니다.
+  //   this.getCode();
+  //   this.getCookie();
+  // },
   methods: {
-    getCode() { //인증 코드 관련 메서드
-      getCodeImg().then(res => {
-        this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled;
-        if (this.captchaEnabled) {
-          this.codeUrl = "data:image/gif;base64," + res.img;
-          this.loginForm.uuid = res.uuid;
-        }
-      });
-    },
+    // getCode() { //인증 코드 관련 메서드
+    //   getCodeImg().then(res => {
+    //     this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled;
+    //     if (this.captchaEnabled) {
+    //       this.codeUrl = "data:image/gif;base64," + res.img;
+    //       this.loginForm.uuid = res.uuid;
+    //     }
+    //   });
+    // },
     getCookie() {
       const username = Cookies.get("username");
       const password = Cookies.get("password");
@@ -127,31 +129,83 @@ export default {
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
       };
     },
+
+
+
+    handleTest(){
+      var test = {
+
+      }
+    },
+
+
     handleLogin() {
-      this.$refs.loginForm.validate(valid => { //검사할 것이다
-        if (valid) {
-          this.loading = true;
-          if (this.loginForm.rememberMe) { //rememberMe 체크 했을 때
-            //set 쿠키 할 때 (이름, 값, date) 형식
-            Cookies.set("username", this.loginForm.username, { expires: 30 }); //30일이 지나면 username을 만료시킴
-            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 }); //30일이 지나면 password을 만료시킴
-            Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 }); //30일이 지나면 rememberMe을 만료시킴
-          } else { //rememberMe 체크 안 했을 때
-            Cookies.remove("username"); //username을 쿠키에서 지우겠다
-            Cookies.remove("password"); //password를 쿠키에서 지우겠다
-            Cookies.remove('rememberMe'); //rememberMe를 쿠키에서 지우겠다
+      // this.$refs.loginForm.validate(valid => { //검사할 것이다
+      //   if (valid) {
+      //     this.loading = true;
+      //     if (this.loginForm.rememberMe) { //rememberMe 체크 했을 때
+      //       //set 쿠키 할 때 (이름, 값, date) 형식
+      //       Cookies.set("username", this.loginForm.username, { expires: 30 }); //30일이 지나면 username을 만료시킴
+      //       Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 }); //30일이 지나면 password을 만료시킴
+      //       Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 }); //30일이 지나면 rememberMe을 만료시킴
+      //     } else { //rememberMe 체크 안 했을 때
+      //       Cookies.remove("username"); //username을 쿠키에서 지우겠다
+      //       Cookies.remove("password"); //password를 쿠키에서 지우겠다
+      //       Cookies.remove('rememberMe'); //rememberMe를 쿠키에서 지우겠다
+      //     }
+      //     //store = 쿠키 값에 저장되는 값
+      //     this.$store.dispatch("Login", this.loginForm).then(() => { //이 뷰에 스토어에 저장된 값을 가져와 거기에 로그인 한 값이 있으면 로그인 폼으로 던져 (맞나?)
+      //       this.$router.push({ path: this.redirect || "/" }).catch(()=>{}); // 이 라우터에 이 리다이렉트 들어온 것, 혹은 루트가 들어왔을 때 잡아서 로그인 폼으로 넣을거야 (맞나?)
+      //     }).catch(() => {
+      //       this.loading = false;
+      //       if (this.captchaEnabled) {
+      //         this.getCode();
+      //       }
+      //     });
+      //   }
+      // });
+
+      //BIZZAN 소스
+      // login(this.loginForm) //login 함수 호출, this.form 인자로 전달
+      //   .then(res => { //res = 서버로부터 받은 응답 객체
+      //     if (!res.code) { //응답 객체 res의 code 속성이 falsy한 경우 (0, false, undefined 등), 로그인이 성공적으로 처리되었다는 의미입니다. (성공적일시 백단에서 0 줌)
+      //       Cookies.set('user', res.data.admin.username, { expires: 7 }); //user라는 이름의 쿠키에 셋 (만료 7일 후)
+      //       Cookies.set('userInfo', res.data.admin, { expires: 7 });
+      //       setStore("leftSidebarList", res.data.permissions); //setStore 함수를 사용하여 'leftSidebarList'라는 이름의 스토어에 res.data.permissions 값을 저장합니다. 이는 사용자의 왼쪽 사이드바 메뉴 권한을 나타냅니다.
+      //       localStorage.setItem("admin-auth-token", res.data.authToken); //브라우저의 localStorage에 'admin-auth-token'이라는 이름으로 사용자의 인증 토큰 (res.data.authToken)을 저장합니다. 이는 사용자가 로그인한 세션을 유지하는 데 사용됩니다.
+      //       this.$router.push({ name: "home_index" }); //Vue Router를 사용하여 'home_index'라는 이름의 라우터로 이동합니다. 이동하는 라우터는 사용자가 로그인 후에 보여질 홈 페이지입니다.
+      //     } else this.$Message.error(res.message); //만약 서버에서 받은 응답 객체 res의 code가 truthy한 경우 (에러 발생 시), this.$Message.error(res.message)를 호출하여 에러 메시지를 사용자에게 표시합니다.
+      //   })
+      //   .catch(err => console.log(err)); //login 함수 실행 중 발생한 오류를 콘솔에 출력합니다.
+
+
+      login(this.loginForm)
+        .then(res => {
+          console.log("Login response", res);
+          if (!res.code) {
+            console.log("here");
+            // Cookies.set('user', res.data.admin.username, {expires: 7});
+            // Cookies.set('userInfo', res.data.admin, {expires: 7});
+            // setStore("leftSidebarList", res.data.permission);
+            // localStorage.setItem("admin-auth-token", res.data.authToken);
+            // router.push({name: "home_index"});
+          } else {
+            this.$message.error(res.message);
           }
-          //store = 쿠키 값에 저장되는 값
-          this.$store.dispatch("Login", this.loginForm).then(() => { //이 뷰에 스토어에 저장된 값을 가져와 거기에 로그인 한 값이 있으면 로그인 폼으로 던져 (맞나?)
-            this.$router.push({ path: this.redirect || "/" }).catch(()=>{}); // 이 라우터에 이 리다이렉트 들어온 것, 혹은 루트가 들어왔을 때 잡아서 로그인 폼으로 넣을거야 (맞나?)
-          }).catch(() => {
-            this.loading = false;
-            if (this.captchaEnabled) {
-              this.getCode();
-            }
-          });
-        }
-      });
+        })
+        .catch(err => console.log(err));
+
+
+      //원래 소스
+      // login(username, password).then(res => {//, code, uuid).then(res => {
+      //   setToken(res.token)
+      //   commit('SET_TOKEN', res.token)
+      //   resolve()
+      // }).catch(error => {
+      //   reject(error)
+      // })
+
+
     }
   }
 };
